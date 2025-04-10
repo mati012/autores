@@ -1,6 +1,7 @@
 package com.example.user.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,30 @@ public class AutorController {
     public AutorController(AutorService autorService) {
         this.autorService = autorService;
     }
-
+    @PostMapping("/login")
+        public ResponseEntity<?> loginUser(@RequestBody Map<String, String> credentials) {
+            String username = credentials.get("username");
+            String password = credentials.get("password");
+            
+            if (username == null || password == null) {
+                return ResponseEntity.badRequest().body("Username y password son requeridos");
+            }
+            
+            Optional<Autor> userOpt = autorService.findByUsername(username);
+            
+            if (userOpt.isPresent()) {
+                Autor user = userOpt.get();
+                
+                // Verifica la contraseña (en un sistema real deberías usar encriptación)
+                if (password.equals(user.getPassword())) {
+                    // Quita la contraseña antes de enviar al cliente
+                    user.setPassword(null);
+                    return ResponseEntity.ok(user);
+                }
+            }
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
+        }
  
     @PostMapping
     public ResponseEntity<?> createUser(@Valid @RequestBody Autor user) {
